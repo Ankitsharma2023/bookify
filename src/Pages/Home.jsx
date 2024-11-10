@@ -15,7 +15,7 @@ const [books , setBooks ] = useState([]);
         <CardGroup>{
         
       books.map(books => 
-        <BookCard key={books.id} {...books.data()}/>
+        <BookCard link = {`/book/view/${books.id}`} key={books.id} id={books.id} {...books.data()}/>
       )
       }
       </CardGroup>

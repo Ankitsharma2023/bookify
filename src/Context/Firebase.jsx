@@ -6,7 +6,7 @@ import {getAuth,createUserWithEmailAndPassword
     signInWithPopup,
     onAuthStateChanged
 } from 'firebase/auth';
-import {  collection ,addDoc, getFirestore , getDocs } from "firebase/firestore";
+import {  collection ,addDoc, getFirestore , getDocs , getDoc,doc, query , where  } from "firebase/firestore";
 
 const FirebaseContext = createContext(null);
 
@@ -94,10 +94,54 @@ const [user , setUser] = useState(null);
     const listAllBooks = async () => {
     return getDocs(collection(firestore, 'books'));
     } 
+//    WHEN I PASS BOOOK ID , IT RETURN PARTICULAR BOOK
+    const getBookById = async (id) => {
+    const docRef = doc (firestore, 'books', id);
+    const result = await getDoc(docRef);
+    return result;
+    }
+ 
+    //order placed 
+    const placeOrder = async (bookId, qty) => {
+        if (!user) throw new Error('User must be logged in to place order');
+        
+        // Correct path for subcollection
+        const orderRef = collection(firestore, 'books', bookId, 'orders');
+        
+        try {
+            const result = await addDoc(orderRef, {
+                userId: user.uid,
+                userEmail: user.email,
+                displayName: user.displayName,
+                qty: Number(qty),
+                createdAt: new Date().toISOString()
+            });
+            return { success: true, orderId: result.id };
+        } catch (error) {
+            console.error('Error placing order:', error);
+            return { success: false, error: error.message };
+        }
+    };
 
+    const fetchMyBooks = async (userId) =>{
+const collectionRef = collection(firestore,"books");
+const q = query(collectionRef,where("userId","==",userId));
+const result = await getDocs(q);
+return result;
+    }
+
+    const getOrders = async(bookId) => {
+        const collectionRef = collection(firestore, 'books', bookId, 'orders');
+      const result = await getDocs(collectionRef);
+      return result;
+    }
 const isLoggedIn = user ? true :false;
     return (
-        <FirebaseContext.Provider value ={{signUpUserWithEmailAndPassword, signInUserWithEmailAndPass,signInWithGoogle,isLoggedIn , handleCreateNewListing, listAllBooks}}>
+        <FirebaseContext.Provider value ={{signUpUserWithEmailAndPassword, signInUserWithEmailAndPass,signInWithGoogle,isLoggedIn , handleCreateNewListing, listAllBooks, getBookById, placeOrder,
+        fetchMyBooks,
+        user,
+        getOrders
+        }}>
             {props.children}
         </FirebaseContext.Provider>
     )
